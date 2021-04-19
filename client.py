@@ -77,5 +77,5 @@ if __name__ == '__main__':
         print('Interrupted')
         try:
             sys.exit(0)
-        except SystemExit():
+        except SystemExit:
             os._exit(0)

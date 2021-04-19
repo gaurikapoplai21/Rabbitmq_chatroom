@@ -5,10 +5,9 @@ import os
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
 channel = connection.channel()
-
+channel.exchange_declare(exchange='logs', exchange_type='fanout')
 
 def broadcast(body, props):
-    channel.exchange_declare(exchange='logs', exchange_type='fanout')
     channel.basic_publish(exchange='logs', routing_key='', properties=pika.BasicProperties(
         correlation_id=props.correlation_id), body=body)
 
@@ -34,5 +33,5 @@ if __name__ == '__main__':
         print('Interrupted')
         try:
             sys.exit(0)
-        except SystemExit():
+        except SystemExit:
             os._exit(0)
