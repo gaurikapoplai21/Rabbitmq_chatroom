@@ -7,7 +7,7 @@ channel = connection.channel()
 def broadcast(body):
     channel.exchange_declare(exchange='logs', exchange_type='fanout')
     channel.basic_publish(exchange='logs', routing_key='', body=body)
-    print(" [x] Sent %r" % body)
+    
 
 def main():
     
@@ -15,7 +15,7 @@ def main():
     channel.queue_declare(queue='hello')
 
     def callback(ch, method, properties, body):
-        print(" [x] Received %r" % body)
+        print(" [x] %s" % body.decode())
         broadcast(body)
 
     channel.basic_consume(queue='hello', on_message_callback=callback, auto_ack=True)

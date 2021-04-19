@@ -6,73 +6,65 @@ import sys,os
 import threading
 
 
-'''
-connection = pika.BlockingConnection(
-    pika.ConnectionParameters(host='localhost'))
-channel = connection.channel()
-channel.queue_declare(queue='hello')
 
-#channel.exchange_declare(exchange='logs', exchange_type='fanout')
-channel.exchange_declare(exchange='logs', exchange_type='fanout')
-
-result = channel.queue_declare(queue='', exclusive=True)
-queue_name = result.method.queue
-
-channel.queue_bind(exchange='logs', queue=queue_name)
-
-print(' [*] Waiting for logs. To exit press CTRL+C')
-
-def callback(ch, method, properties, body):
-    print(" [x] %r" % body)
-
-channel.basic_consume(
-    queue=queue_name, on_message_callback=callback, auto_ack=True)
-
-
-
-def main():
-   while(1):
-    str = input()
-    
-    channel.basic_publish(exchange='', routing_key='hello', body=str)
-    #channel.basic_publish(exchange='logs', routing_key='', body=message)
-
-    print(" [x] Sent ",str)
-
-''' 
 
 
 class Client:
+    username = ''
     def __init__(self):
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(host='localhost'))
+        self.getname() 
+    
         receive_thread = threading.Thread(target=self.receive)
         receive_thread.start()
-        write_thread = threading.Thread(target=self.send)
-        write_thread.start()   
-
-    def receive(self):
-        channel_receive = self.connection.channel()
-        result = channel_receive.queue_declare(queue='', exclusive=True)
-        queue_name = result.method.queue
-        channel_receive.queue_bind(exchange='logs', queue=queue_name)
-        print(' [*] Waiting for logs. To exit press CTRL+C')
-
-        def callback(ch, method, properties, body):
-            print(" [x] %r" % body)
-
-        channel_receive.basic_consume(
-           queue=queue_name, on_message_callback=callback, auto_ack=True)
+        send_thread = threading.Thread(target=self.send)
+        send_thread.start()
         
-        channel_receive.start_consuming()
+    def getname(self):
+        print("Enter a username for the client")
+        name = input()
+        self.username = name
+        
+    def receive(self):
+        try:
+            channel_receive = self.connection.channel()
+            result = channel_receive.queue_declare(queue='', exclusive=True)
+            queue_name = result.method.queue
+            channel_receive.queue_bind(exchange='logs', queue=queue_name)
+            print(' [*] Waiting for messages. To exit press CTRL+C')
+
+            def callback(ch, method, properties, body):
+                print(" [x] %s" % body.decode())
+
+            channel_receive.basic_consume(
+            queue=queue_name, on_message_callback=callback, auto_ack=True)
+            
+            channel_receive.start_consuming()
+        except KeyboardInterrupt:
+            receive_thread.join()
+            client.connection.close()
+            
+
 
     def send(self):
-       channel_send = self.connection.channel()
-       channel_send.queue_declare(queue='hello')
-       while(True):
-          str = input()
-          channel_send.basic_publish(exchange='', routing_key='hello', body=str)
-          print(" [x] Sent ",str)
+        try: 
+            channel_send = self.connection.channel()
+            channel_send.queue_declare(queue='hello')
+           
+            while(True):
+                try:
+                    str = input()
+                    message = '[{}] : {}'.format(self.username, str)
+
+                    channel_send.basic_publish(exchange='', routing_key='hello', body=message)
+                except KeyboardInterrupt:
+                    break    
+                  
+        except KeyboardInterrupt:
+            send_thread.join()
+            client.connection.close()
+            
 
 
 if __name__ == '__main__':
@@ -80,7 +72,7 @@ if __name__ == '__main__':
        client = Client()
 
     except KeyboardInterrupt:
-        client.connection.close()
+        
         print('Interrupted')
         
         try:
