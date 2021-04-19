@@ -5,6 +5,8 @@ import sys,os
 import threading
 import signal
 import time
+import uuid
+
 
 
 
@@ -15,7 +17,8 @@ class Client:
     def __init__(self):
         
         self.getname() 
-    
+        self.corr_id = str(uuid.uuid4())
+
         receive_thread = threading.Thread(target=self.receive)
         receive_thread.daemon = True
         receive_thread.start()
@@ -43,7 +46,9 @@ class Client:
             print(' [*] Waiting for messages. To exit press CTRL+C')
 
             def callback(ch, method, properties, body):
-                print(" [x] %s" % body.decode())
+                
+                if self.corr_id != properties.correlation_id:
+                    print(" [x] %s" % body.decode())
 
             channel_receive.basic_consume(
             queue=queue_name, on_message_callback=callback, auto_ack=True)
@@ -55,7 +60,6 @@ class Client:
 
     def send(self):
         
-
             connection2 = pika.BlockingConnection(
             pika.ConnectionParameters(host='localhost'))
             channel_send = connection2.channel()
@@ -67,10 +71,13 @@ class Client:
                     str = input()
                     message = '[{}] : {}'.format(self.username, str)
 
-                    channel_send.basic_publish(exchange='', routing_key='hello', body=message)
+                    channel_send.basic_publish(exchange='', routing_key='hello', properties=pika.BasicProperties(
+                                              correlation_id=self.corr_id),body=message)
                except:
                    last  = self.username + " has left the chat"
-                   channel_send.basic_publish(exchange='', routing_key='hello', body=last)
+                   #fix this
+                   channel_send.basic_publish(exchange='', routing_key='hello',properties=pika.BasicProperties(
+                                              correlation_id=self.corr_id), body=last)
                    break
                     
 

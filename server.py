@@ -4,9 +4,12 @@ import pika, sys, os
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
 channel = connection.channel()
 
-def broadcast(body):
+def broadcast(body,props):
+    
     channel.exchange_declare(exchange='logs', exchange_type='fanout')
-    channel.basic_publish(exchange='logs', routing_key='', body=body)
+    channel.basic_publish(exchange='logs', routing_key='',properties=pika.BasicProperties(correlation_id = 
+                                                         props.correlation_id), body=body)
+    
     
 
 def main():
@@ -16,7 +19,7 @@ def main():
 
     def callback(ch, method, properties, body):
         print(" [x] %s" % body.decode())
-        broadcast(body)
+        broadcast(body,properties)
 
     channel.basic_consume(queue='hello', on_message_callback=callback, auto_ack=True)
 
@@ -27,7 +30,8 @@ if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
-        broadcast("server connection closed.")
+        #fix this
+        #broadcast("server connection closed.")
         print('Interrupted')
         try:
             sys.exit(0)
