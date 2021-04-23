@@ -24,3 +24,10 @@ Setup
 - Check connection status (all nodes)
 
   - ``` sudo rabbitmqctl cluster_status ```
+
+
+- To remove a node from the cluster (client nodes)
+
+  - ``` sudo rabbitmqctl stop_app ```
+  - ``` sudo rabbitmqctl reset ```
+  - ``` sudo rabbitmqctl start_app ```
