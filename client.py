@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# 1 thread for each channel
 import pika
 import sys
 import os
@@ -28,10 +26,11 @@ class Client:
 
     def receive(self):
 
-        connection1 = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        connection1 = pika.BlockingConnection(pika.ConnectionParameters(host='<SERVER_NAME/IP>',port=5672,credentials=pika.PlainCredentials("admin","password")))
         channel_receive = connection1.channel()
         result = channel_receive.queue_declare(queue='', exclusive=True)
         queue_name = result.method.queue
+        channel_receive.exchange_declare('logs','fanout')
         channel_receive.queue_bind(exchange='logs', queue=queue_name)
         print(' [*] Waiting for messages. To exit press CTRL+C')
 
@@ -45,31 +44,28 @@ class Client:
     def send(self):
 
         connection2 = pika.BlockingConnection(
-            pika.ConnectionParameters(host='localhost'))
+            pika.ConnectionParameters(host='pop-os',port=5672,credentials=pika.PlainCredentials("admin","password")))
         channel_send = connection2.channel()
         channel_send.queue_declare(queue='hello')
         first = self.username + " has entered the chat"
-        channel_send.basic_publish(exchange='', routing_key='hello',properties=pika.BasicProperties(correlation_id=self.corr_id), body=first)
-        
+        channel_send.basic_publish(exchange='', routing_key='hello', body=first)
+
         while(True):
 
-          try:
-            str1 = input()
-            message = '[{}] : {}'.format(self.username, str1)
-            channel_send.basic_publish(exchange='', routing_key='hello', properties=pika.BasicProperties(correlation_id=self.corr_id), body=message)
-        
-          except:
-            last = self.username + " has left the chat"
-            # fix this
-            channel_send.basic_publish(exchange='', routing_key='hello', properties=pika.BasicProperties(correlation_id=self.corr_id), body=last)
-            break
-            
+            try:
+                str1 = input()
+                message = '[{}] : {}'.format(self.username, str1)
+                channel_send.basic_publish(exchange='', routing_key='hello', properties=pika.BasicProperties(correlation_id=self.corr_id), body=message)
+
+            except KeyboardInterrupt:
+                last = self.username + " has left the chat"
+                channel_send.basic_publish(exchange='', routing_key='hello', properties=pika.BasicProperties(correlation_id=self.corr_id), body=last)
+                break
 
 
 if __name__ == '__main__':
 
     try:
-        os.system('cls')
         client = Client()
         while(True):
             time.sleep(1)

@@ -1,9 +1,6 @@
-#!/usr/bin/env python
 import pika
 import sys
 import os
-import subprocess
-from sys import platform
 
 IP = 'localhost'
 server = ''
