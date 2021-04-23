@@ -9,6 +9,9 @@ import socket
 IP = ''
 server = ''
 
+
+    
+
 if platform == "linux" or platform == "linux2":
     os.system('clear')
     cmd = "ip -4 addr | grep -oP '(?<=inet\\s)\\d+(\\.\\d+){3}'"
@@ -63,10 +66,30 @@ elif platform == "darwin":
 
 elif platform == "win32":
     os.system('cls')
-    IP = socket.gethostbyname(socket.gethostname())
+    IPs = []
+    IPs.append("127.0.0.1")
+    IPs.append(socket.gethostbyname(socket.gethostname()))
+    print("Select IP to use for server 0 to", len(IPs)-1)
+    for i in range(len(IPs)):
+            print("[{}] {}".format(i, IPs[i]))
+    choice = input()
+
+    try:
+            choice = int(choice)
+            if choice < 0 or choice > len(IPs)-1:
+                print("Invalid choice, defaulting to", IPs[0])
+                IP = IPs[0]
+            else:
+                IP = IPs[choice]
+    except:
+            print("Invalid choice, defaulting to", IPs[0])
+            IP = IPs[0]
+    
+
 else:
     print('Unsupported OS')
     exit(1)
+
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(host=str(IP)))
 channel = connection.channel()
@@ -91,6 +114,7 @@ def main():
 
 if __name__ == '__main__':
     try:
+        
         main()
     except KeyboardInterrupt:
         # fix this

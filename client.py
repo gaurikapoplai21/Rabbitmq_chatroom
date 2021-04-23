@@ -49,25 +49,27 @@ class Client:
         channel_send = connection2.channel()
         channel_send.queue_declare(queue='hello')
         first = self.username + " has entered the chat"
-        channel_send.basic_publish(exchange='', routing_key='hello', body=first)
-
+        channel_send.basic_publish(exchange='', routing_key='hello',properties=pika.BasicProperties(correlation_id=self.corr_id), body=first)
+        
         while(True):
 
-            try:
-                str1 = input()
-                message = '[{}] : {}'.format(self.username, str1)
-                channel_send.basic_publish(exchange='', routing_key='hello', properties=pika.BasicProperties(correlation_id=self.corr_id), body=message)
-
-            except KeyboardInterrupt:
-                last = self.username + " has left the chat"
-                # fix this
-                channel_send.basic_publish(exchange='', routing_key='hello', properties=pika.BasicProperties(correlation_id=self.corr_id), body=last)
-                break
+          try:
+            str1 = input()
+            message = '[{}] : {}'.format(self.username, str1)
+            channel_send.basic_publish(exchange='', routing_key='hello', properties=pika.BasicProperties(correlation_id=self.corr_id), body=message)
+        
+          except:
+            last = self.username + " has left the chat"
+            # fix this
+            channel_send.basic_publish(exchange='', routing_key='hello', properties=pika.BasicProperties(correlation_id=self.corr_id), body=last)
+            break
+            
 
 
 if __name__ == '__main__':
 
     try:
+        os.system('cls')
         client = Client()
         while(True):
             time.sleep(1)
