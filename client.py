@@ -13,11 +13,12 @@ class Client:
         self.getname()
         self.corr_id = str(uuid.uuid4())
         receive_thread = threading.Thread(target=self.receive)
-        receive_thread.daemon = True
+        
         receive_thread.start()
         send_thread = threading.Thread(target=self.send)
-        send_thread.daemon = True
+        
         send_thread.start()
+        send_thread.join()
 
     def getname(self):
         print("Enter a username for the client")
@@ -48,7 +49,7 @@ class Client:
         channel_send = connection2.channel()
         channel_send.queue_declare(queue='hello')
         first = self.username + " has entered the chat"
-        channel_send.basic_publish(exchange='', routing_key='hello', body=first)
+        channel_send.basic_publish(exchange='', routing_key='hello', properties=pika.BasicProperties(correlation_id=self.corr_id),body=first)
 
         while(True):
 
@@ -57,7 +58,7 @@ class Client:
                 message = '[{}] : {}'.format(self.username, str1)
                 channel_send.basic_publish(exchange='', routing_key='hello', properties=pika.BasicProperties(correlation_id=self.corr_id), body=message)
 
-            except KeyboardInterrupt:
+            except:
                 last = self.username + " has left the chat"
                 channel_send.basic_publish(exchange='', routing_key='hello', properties=pika.BasicProperties(correlation_id=self.corr_id), body=last)
                 break
@@ -67,11 +68,10 @@ if __name__ == '__main__':
 
     try:
         client = Client()
-        while(True):
-            time.sleep(1)
+        
 
     except KeyboardInterrupt:
-        print(client.username + " has left the chat")
+       
         print('Interrupted')
         try:
             sys.exit(0)
