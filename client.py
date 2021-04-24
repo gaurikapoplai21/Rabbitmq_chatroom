@@ -43,9 +43,7 @@ class Client:
         channel_receive.start_consuming()
 
     def send(self):
-
-        connection2 = pika.BlockingConnection(
-            pika.ConnectionParameters(host='pop-os',port=5672,credentials=pika.PlainCredentials("admin","password")))
+        connection2 = pika.BlockingConnection(pika.ConnectionParameters(host='<SERVER_NAME/IP>',port=5672,credentials=pika.PlainCredentials("admin","password")))
         channel_send = connection2.channel()
         channel_send.queue_declare(queue='hello')
         first = self.username + " has entered the chat"
